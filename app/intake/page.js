@@ -1,26 +1,16 @@
 'use client';
 
-import { Suspense } from "react";
-import { useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
 import { onAuthStateChanged } from "firebase/auth";
-import { auth } from "../lib/firebase";   // adjust if your path differs
+import { auth } from "../lib/firebase"; // adjust path if needed
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 export default function IntakePage() {
-  return (
-    <Suspense fallback={null}>
-      <IntakeInner />
-    </Suspense>
-  );
-}
-
-function IntakeInner() {
-  const searchParams = useSearchParams();
   const [user, setUser] = useState(null);
   const [authReady, setAuthReady] = useState(false);
+  const [qs, setQs] = useState("");
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, (u) => {
@@ -30,9 +20,18 @@ function IntakeInner() {
     return () => unsub();
   }, []);
 
-  if (!authReady) return null;
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setQs(window.location.search);
+    }
+  }, []);
 
-  const sessionId = searchParams.get("session_id") || "";
+  const sessionId = useMemo(() => {
+    const params = new URLSearchParams(qs);
+    return params.get("session_id") || "";
+  }, [qs]);
+
+  if (!authReady) return null;
 
   return (
     <main
@@ -44,15 +43,10 @@ function IntakeInner() {
         lineHeight: 1.6,
       }}
     >
-      {/* YOUR EXISTING INTAKE UI (form/questions/saving) GOES HERE.
-          If your previous code reads session details from /api/payments/session,
-          keep that logic intact below. This wrapper only adds Suspense + dynamic
-          so Vercel stops trying to pre-render this page. */}
       <h1 style={{ fontSize: "clamp(22px, 2.4vw, 34px)", marginBottom: "1.25rem" }}>
         Service intake
       </h1>
 
-      {/* Example: show session id so you know it's being received */}
       <div
         style={{
           border: "1px solid #eee",
@@ -65,7 +59,8 @@ function IntakeInner() {
         <strong>Checkout session:</strong> {sessionId || "—"}
       </div>
 
-      {/* ↓ Replace this with your real intake form+save logic */}
+      {/* Keep (or paste back) your real intake form + Firestore save logic below.
+          This wrapper just avoids useSearchParams and forces dynamic rendering. */}
       <p style={{ opacity: 0.8 }}>
         Replace this placeholder with your existing intake form code.
       </p>
