@@ -1,30 +1,19 @@
 'use client';
 
-import { Suspense } from "react";
-import { useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useEffect, useState, useMemo } from "react";
 import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "../../lib/firebase";
 
-export const dynamic = "force-dynamic";   // don’t pre-render
-export const revalidate = 0;              // no caching
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 export default function CheckoutPage() {
-  return (
-    <Suspense fallback={null}>
-      <CheckoutInner />
-    </Suspense>
-  );
-}
-
-function CheckoutInner() {
-  const searchParams = useSearchParams();
   const [user, setUser] = useState(null);
   const [authReady, setAuthReady] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
 
-  // Track auth state
+  // raw query string from the browser (no useSearchParams)
+  const [qs, setQs] = useState("");
+
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, (u) => {
       setUser(u);
@@ -33,18 +22,40 @@ function CheckoutInner() {
     return () => unsub();
   }, []);
 
+  useEffect(() => {
+    // client-only: capture current query string for parsing
+    if (typeof window !== "undefined") {
+      setQs(window.location.search);
+    }
+  }, []);
+
   // If not authed, bounce home, open signup, preserve QS to resume
   useEffect(() => {
     if (!authReady) return;
     if (!user) {
       try {
-        const qs = window.location.search.slice(1);
-        if (qs) localStorage.setItem("pendingCheckoutQS", qs);
+        const raw = qs.startsWith("?") ? qs.slice(1) : qs;
+        if (raw) localStorage.setItem("pendingCheckoutQS", raw);
       } catch {}
       window.dispatchEvent(new Event("open-signup"));
       window.location.href = "/";
     }
-  }, [authReady, user]);
+  }, [authReady, user, qs]);
+
+  // Parse selections safely from qs
+  const sel = useMemo(() => {
+    const params = new URLSearchParams(qs);
+    return {
+      service: params.get("service") || "",
+      frequency: params.get("frequency") || "",
+      yardSize: params.get("yardSize") || "",
+      pets: params.get("pets") || "",
+      litterBoxes: params.get("litterBoxes") || "",
+    };
+  }, [qs]);
+
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   async function startCheckout() {
     setLoading(true);
@@ -54,22 +65,18 @@ function CheckoutInner() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          service:       searchParams.get("service"),
-          frequency:     searchParams.get("frequency"),
-          yardSize:      searchParams.get("yardSize"),
-          pets:          searchParams.get("pets"),
-          litterBoxes:   searchParams.get("litterBoxes"),
+          ...sel,
           customerEmail: user?.email || null,
         }),
       });
       const data = await res.json();
-      if (data.url) {
+      if (data?.url) {
         window.location.href = data.url;
       } else {
-        setError(data.error || "Unable to start checkout");
+        setError(data?.error || "Unable to start checkout");
       }
     } catch (err) {
-      setError(err.message || "Checkout error");
+      setError(err?.message || "Checkout error");
     }
     setLoading(false);
   }
@@ -101,24 +108,24 @@ function CheckoutInner() {
         }}
       >
         <p style={{ marginBottom: "1rem" }}>
-          <strong>Service:</strong> {searchParams.get("service")}
+          <strong>Service:</strong> {sel.service || "—"}
         </p>
         <p style={{ marginBottom: "1rem" }}>
-          <strong>Frequency:</strong> {searchParams.get("frequency")}
+          <strong>Frequency:</strong> {sel.frequency || "—"}
         </p>
-        {searchParams.get("yardSize") && (
+        {sel.yardSize && (
           <p style={{ marginBottom: "1rem" }}>
-            <strong>Yard size:</strong> {searchParams.get("yardSize")}
+            <strong>Yard size:</strong> {sel.yardSize}
           </p>
         )}
-        {searchParams.get("pets") && (
+        {sel.pets && (
           <p style={{ marginBottom: "1rem" }}>
-            <strong># of pets:</strong> {searchParams.get("pets")}
+            <strong># of pets:</strong> {sel.pets}
           </p>
         )}
-        {searchParams.get("litterBoxes") && (
+        {sel.litterBoxes && (
           <p style={{ marginBottom: "1rem" }}>
-            <strong># of litter boxes:</strong> {searchParams.get("litterBoxes")}
+            <strong># of litter boxes:</strong> {sel.litterBoxes}
           </p>
         )}
 
