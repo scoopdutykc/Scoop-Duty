@@ -1,10 +1,8 @@
-// app/api/payments/session/route.js
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 import Stripe from "stripe";
-
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
   apiVersion: "2023-10-16",
 });
@@ -13,7 +11,6 @@ export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
     const session_id = searchParams.get("session_id");
-
     if (!session_id) {
       return new Response(JSON.stringify({ error: "Missing session_id" }), {
         status: 400,
