@@ -2,9 +2,8 @@
 import React, { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { onAuthStateChanged } from "firebase/auth";
-import { auth } from "../lib/firebase"; // adjust if your firebase path differs
+import { auth, app as firebaseApp } from "../../lib/firebase"; // ✅ correct path
 import { getFirestore, addDoc, collection, serverTimestamp } from "firebase/firestore";
-import { app as firebaseApp } from "../lib/firebase";
 
 export const dynamic = "force-dynamic";
 
