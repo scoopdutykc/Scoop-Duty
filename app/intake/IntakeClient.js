@@ -3,6 +3,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { onAuthStateChanged } from "firebase/auth";
 import { auth, db } from "../../lib/firebase";
 import { addDoc, collection, serverTimestamp } from "firebase/firestore";
@@ -136,6 +137,7 @@ const FORM_CONFIGS = {
 
 export default function IntakeClient() {
   const params = useSearchParams();
+  const router = useRouter();
   const sessionId = params.get("session_id") || "";
 
   const [user, setUser] = useState(null);
@@ -249,9 +251,10 @@ export default function IntakeClient() {
         createdAt: serverTimestamp(),
       });
 
-      alert("Thanks! Your details were submitted.");
-      // Optional post-submit redirect:
-      // window.location.href = "/billing";
+      if (typeof window !== "undefined") {
+        alert("Thanks for signing up! we will email you shortly with more details.");
+      }
+      router.push("/billing");
     } catch (e2) {
       console.error("Intake submit error:", e2);
       setError("Could not submit your details. Please try again.");
