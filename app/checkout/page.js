@@ -1,4 +1,3 @@
-// app/checkout/page.js
 'use client';
 
 import { Suspense } from "react";
@@ -7,8 +6,8 @@ import { useSearchParams } from "next/navigation";
 import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "../../lib/firebase";
 
-export const dynamic = "force-dynamic";      // ⬅️ tell Next not to pre-render
-export const revalidate = 0;                 // ⬅️ no caching for this page
+export const dynamic = "force-dynamic";   // don’t pre-render
+export const revalidate = 0;              // no caching
 
 export default function CheckoutPage() {
   return (
@@ -34,7 +33,7 @@ function CheckoutInner() {
     return () => unsub();
   }, []);
 
-  // If not authed, bounce home & open signup; preserve QS to resume
+  // If not authed, bounce home, open signup, preserve QS to resume
   useEffect(() => {
     if (!authReady) return;
     if (!user) {
@@ -55,11 +54,11 @@ function CheckoutInner() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          service: searchParams.get("service"),
-          frequency: searchParams.get("frequency"),
-          yardSize: searchParams.get("yardSize"),
-          pets: searchParams.get("pets"),
-          litterBoxes: searchParams.get("litterBoxes"),
+          service:       searchParams.get("service"),
+          frequency:     searchParams.get("frequency"),
+          yardSize:      searchParams.get("yardSize"),
+          pets:          searchParams.get("pets"),
+          litterBoxes:   searchParams.get("litterBoxes"),
           customerEmail: user?.email || null,
         }),
       });
@@ -75,6 +74,7 @@ function CheckoutInner() {
     setLoading(false);
   }
 
+  // While auth is loading or we just redirected, render nothing
   if (!authReady || !user) return null;
 
   return (
