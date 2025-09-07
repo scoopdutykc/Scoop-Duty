@@ -1,18 +1,17 @@
 'use client';
-
-import { useEffect, useState, useMemo } from "react";
+import React, { Suspense, useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "../../lib/firebase";
 
 export const dynamic = "force-dynamic";
-export const revalidate = 0;
 
-export default function CheckoutPage() {
+function CheckoutInner() {
+  const searchParams = useSearchParams();
   const [user, setUser] = useState(null);
   const [authReady, setAuthReady] = useState(false);
-
-  // raw query string from the browser (no useSearchParams)
-  const [qs, setQs] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, (u) => {
@@ -22,40 +21,18 @@ export default function CheckoutPage() {
     return () => unsub();
   }, []);
 
-  useEffect(() => {
-    // client-only: capture current query string for parsing
-    if (typeof window !== "undefined") {
-      setQs(window.location.search);
-    }
-  }, []);
-
-  // If not authed, bounce home, open signup, preserve QS to resume
+  // If not authed, bounce to home, open signup, and save current qs to resume
   useEffect(() => {
     if (!authReady) return;
     if (!user) {
       try {
-        const raw = qs.startsWith("?") ? qs.slice(1) : qs;
-        if (raw) localStorage.setItem("pendingCheckoutQS", raw);
+        const qs = window.location.search.slice(1);
+        if (qs) localStorage.setItem("pendingCheckoutQS", qs);
       } catch {}
       window.dispatchEvent(new Event("open-signup"));
       window.location.href = "/";
     }
-  }, [authReady, user, qs]);
-
-  // Parse selections safely from qs
-  const sel = useMemo(() => {
-    const params = new URLSearchParams(qs);
-    return {
-      service: params.get("service") || "",
-      frequency: params.get("frequency") || "",
-      yardSize: params.get("yardSize") || "",
-      pets: params.get("pets") || "",
-      litterBoxes: params.get("litterBoxes") || "",
-    };
-  }, [qs]);
-
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  }, [authReady, user]);
 
   async function startCheckout() {
     setLoading(true);
@@ -65,23 +42,27 @@ export default function CheckoutPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          ...sel,
+          service:      searchParams.get("service"),
+          frequency:    searchParams.get("frequency"),
+          yardSize:     searchParams.get("yardSize"),
+          pets:         searchParams.get("pets"),
+          litterBoxes:  searchParams.get("litterBoxes"),
           customerEmail: user?.email || null,
         }),
       });
       const data = await res.json();
-      if (data?.url) {
+      if (data.url) {
         window.location.href = data.url;
       } else {
-        setError(data?.error || "Unable to start checkout");
+        setError(data.error || "Unable to start checkout");
       }
     } catch (err) {
-      setError(err?.message || "Checkout error");
+      setError(err.message || "Checkout error");
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   }
 
-  // While auth is loading or we just redirected, render nothing
   if (!authReady || !user) return null;
 
   return (
@@ -108,24 +89,24 @@ export default function CheckoutPage() {
         }}
       >
         <p style={{ marginBottom: "1rem" }}>
-          <strong>Service:</strong> {sel.service || "—"}
+          <strong>Service:</strong> {searchParams.get("service")}
         </p>
         <p style={{ marginBottom: "1rem" }}>
-          <strong>Frequency:</strong> {sel.frequency || "—"}
+          <strong>Frequency:</strong> {searchParams.get("frequency")}
         </p>
-        {sel.yardSize && (
+        {searchParams.get("yardSize") && (
           <p style={{ marginBottom: "1rem" }}>
-            <strong>Yard size:</strong> {sel.yardSize}
+            <strong>Yard size:</strong> {searchParams.get("yardSize")}
           </p>
         )}
-        {sel.pets && (
+        {searchParams.get("pets") && (
           <p style={{ marginBottom: "1rem" }}>
-            <strong># of pets:</strong> {sel.pets}
+            <strong># of pets:</strong> {searchParams.get("pets")}
           </p>
         )}
-        {sel.litterBoxes && (
+        {searchParams.get("litterBoxes") && (
           <p style={{ marginBottom: "1rem" }}>
-            <strong># of litter boxes:</strong> {sel.litterBoxes}
+            <strong># of litter boxes:</strong> {searchParams.get("litterBoxes")}
           </p>
         )}
 
@@ -149,5 +130,13 @@ export default function CheckoutPage() {
         </button>
       </div>
     </main>
+  );
+}
+
+export default function CheckoutPage() {
+  return (
+    <Suspense fallback={<main style={{ padding: 24 }}>Loading…</main>}>
+      <CheckoutInner />
+    </Suspense>
   );
 }
