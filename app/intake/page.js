@@ -1,350 +1,311 @@
 'use client';
 
-import { Suspense, useEffect, useMemo, useState } from "react";
-import { useSearchParams } from "next/navigation";
-import { onAuthStateChanged } from "firebase/auth";
-import { auth, db } from "../../lib/firebase"; // ✅ your project exports auth & db here
-import { addDoc, collection, serverTimestamp } from "firebase/firestore";
+import { useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
+import { onAuthStateChanged } from 'firebase/auth';
+import { auth, db } from '../lib/firebase'; // <-- intake/.. goes up one to app/, then lib/
+import { getFirestore, addDoc, collection, serverTimestamp } from 'firebase/firestore';
 
-/** ---------------------------
- *  Form configs by service
- *  ---------------------------
- *  Each service defines sections and fields.
- *  All answers are saved into Firestore as a flat object alongside your metadata.
- */
-const FORM_CONFIGS = {
-  scooping: {
-    title: "Scooping Intake",
-    sections: [
-      {
-        title: "Contact",
-        fields: [
-          { key: "fullName", label: "Full name", required: true, placeholder: "" },
-          { key: "phone", label: "Phone", required: true, placeholder: "" },
-        ],
-      },
-      {
-        title: "Service Address",
-        fields: [
-          { key: "address1", label: "Address line 1", required: true },
-          { key: "address2", label: "Address line 2" },
-          { key: "city", label: "City", required: true },
-          { key: "state", label: "State", required: true },
-          { key: "zip", label: "ZIP", required: true },
-        ],
-      },
-      {
-        title: "Access & Pets",
-        fields: [
-          { key: "gateCode", label: "Gate code / Access notes" },
-          { key: "wasteBinLocation", label: "Front Yard, Backyard, or Both?" },
-          { key: "petsNames", label: "Pet name(s)" },
-          { key: "yardNotes", label: "Yard / special notes", type: "textarea" },
-        ],
-      },
-      {
-        title: "Scheduling Preference",
-        fields: [
-          { key: "preferredDay", label: "Preferred day", placeholder: "e.g., Tuesdays" },
-          { key: "preferredTimeWindow", label: "Preferred time window", placeholder: "e.g., 1–3 PM" },
-          { key: "additionalNotes", label: "Anything else we should know?", type: "textarea" },
-        ],
-      },
-    ],
-  },
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
-  playtime: {
-    title: "Doggy Playtime Intake",
-    sections: [
-      {
-        title: "Contact",
-        fields: [
-          { key: "fullName", label: "Full name", required: true },
-          { key: "phone", label: "Phone", required: true },
-        ],
-      },
-      {
-        title: "Service Address",
-        fields: [
-          { key: "address1", label: "Address line 1", required: true },
-          { key: "address2", label: "Address line 2" },
-          { key: "city", label: "City", required: true },
-          { key: "state", label: "State", required: true },
-          { key: "zip", label: "ZIP", required: true },
-        ],
-      },
-      {
-        title: "Pet Details",
-        fields: [
-          { key: "petsNames", label: "Dog name(s)" },
-          { key: "temperament", label: "Temperament / behavioral notes", type: "textarea" },
-          { key: "playPreferences", label: "Play preferences (toys, games)", type: "textarea" },
-        ],
-      },
-      {
-        title: "Access & Scheduling",
-        fields: [
-          { key: "gateCode", label: "Gate code / Access notes" },
-          { key: "preferredDay", label: "Preferred day", placeholder: "e.g., Tuesdays" },
-          { key: "preferredTimeWindow", label: "Preferred time window", placeholder: "e.g., 1–3 PM" },
-          { key: "additionalNotes", label: "Anything else we should know?", type: "textarea" },
-        ],
-      },
-    ],
-  },
+function withTimeout(promise, ms = 15000, label = 'operation') {
+  return new Promise((resolve, reject) => {
+    const id = setTimeout(() => reject(new Error(`${label} timed out after ${ms}ms`)), ms);
+    promise
+      .then((v) => { clearTimeout(id); resolve(v); })
+      .catch((e) => { clearTimeout(id); reject(e); });
+  });
+}
 
-  litter: {
-    title: "Kitty Litter Trade Intake",
-    sections: [
-      {
-        title: "Contact",
-        fields: [
-          { key: "fullName", label: "Full name", required: true },
-          { key: "phone", label: "Phone", required: true },
-        ],
-      },
-      {
-        title: "Service Address",
-        fields: [
-          { key: "address1", label: "Address line 1", required: true },
-          { key: "address2", label: "Address line 2" },
-          { key: "city", label: "City", required: true },
-          { key: "state", label: "State", required: true },
-          { key: "zip", label: "ZIP", required: true },
-        ],
-      },
-      {
-        title: "Litter Details",
-        fields: [
-          { key: "boxLocations", label: "Where are the litter box(es) located?", type: "textarea" },
-          { key: "catsNames", label: "Cat name(s)" },
-          { key: "homeNotes", label: "Apartment/House details or special notes", type: "textarea" },
-        ],
-      },
-      {
-        title: "Scheduling Preference",
-        fields: [
-          { key: "preferredDay", label: "Preferred day", placeholder: "e.g., Tuesdays" },
-          { key: "preferredTimeWindow", label: "Preferred time window", placeholder: "e.g., 1–3 PM" },
-          { key: "additionalNotes", label: "Anything else we should know?", type: "textarea" },
-        ],
-      },
-    ],
-  },
-};
-
-function IntakeInner() {
-  const params = useSearchParams();
-  const sessionId = params.get("session_id") || "";
+export default function IntakePage() {
+  const searchParams = useSearchParams();
+  const sessionId = searchParams.get('session_id') || '';
 
   const [user, setUser] = useState(null);
+  const [authReady, setAuthReady] = useState(false);
+
+  const [loadingSession, setLoadingSession] = useState(false);
   const [session, setSession] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [sessionErr, setSessionErr] = useState('');
+
+  const [form, setForm] = useState({});
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState("");
+  const [saveErr, setSaveErr] = useState('');
 
-  // Which service was purchased (from Stripe session metadata)
-  const service = (session?.metadata?.service || "").toLowerCase() || "scooping";
-  const config = FORM_CONFIGS[service] || FORM_CONFIGS.scooping;
-
-  // Flat form state (fields are defined by selected service config)
-  const [form, setForm] = useState({}); // we will seed it after we know config
-
-  // Auth
+  // Track auth state
   useEffect(() => {
-    const unsub = onAuthStateChanged(auth, (u) => setUser(u));
+    const unsub = onAuthStateChanged(auth, (u) => {
+      setUser(u || null);
+      setAuthReady(true);
+    });
     return () => unsub();
   }, []);
 
-  // Fetch the checkout session to read metadata (service, frequency, etc.)
+  // Fetch Stripe Checkout Session details for context (service/frequency etc.)
   useEffect(() => {
-    let cancelled = false;
-    async function load() {
-      if (!sessionId) {
-        setLoading(false);
-        return;
-      }
+    if (!sessionId) return;
+    setLoadingSession(true);
+    setSessionErr('');
+    (async () => {
       try {
-        const res = await fetch(`/api/payments/session?session_id=${encodeURIComponent(sessionId)}`);
-        const data = await res.json().catch(() => null);
-        if (res.ok && !cancelled) {
-          setSession(data);
-        } else if (!cancelled) {
-          console.error("Intake: session fetch failed", { status: res.status, data, sessionId });
-          setError(data?.error || `Failed to load session (status ${res.status}).`);
+        const res = await fetch(`/api/payments/session?session_id=${encodeURIComponent(sessionId)}`, {
+          cache: 'no-store',
+        });
+        if (!res.ok) {
+          setSessionErr(`Failed to load session (status ${res.status}).`);
+          setLoadingSession(false);
+          return;
         }
+        const data = await res.json();
+        setSession(data);
       } catch (e) {
-        if (!cancelled) setError("Failed to load session.");
-      } finally {
-        if (!cancelled) setLoading(false);
+        setSessionErr(e?.message || 'Failed to load session.');
       }
-    }
-    load();
-    return () => { cancelled = true; };
+      setLoadingSession(false);
+    })();
   }, [sessionId]);
 
-  // Initialize form keys when config changes
-  useEffect(() => {
-    // Build a default empty object with all keys present
-    const start = {};
-    for (const section of config.sections) {
-      for (const field of section.fields) {
-        if (start[field.key] === undefined) start[field.key] = "";
-      }
+  // Service-specific questions — adjust as needed
+  const service = (session?.metadata?.service || '').toLowerCase(); // 'scooping' | 'playtime' | 'litter'
+  const frequency = (session?.metadata?.frequency || '').toLowerCase();
+
+  // Build field config by service (keep simple & stable)
+  const fields = useMemo(() => {
+    const base = [
+      { key: 'fullName', label: 'Full name', type: 'text', required: true },
+      { key: 'phone', label: 'Phone number', type: 'tel', required: true },
+      { key: 'address', label: 'Service address', type: 'text', required: true },
+      { key: 'accessNotes', label: 'Gate/Access Notes', type: 'textarea', required: false },
+      { key: 'preferredStart', label: 'Preferred start date', type: 'date', required: false },
+    ];
+
+    if (service === 'scooping') {
+      return [
+        ...base,
+        { key: 'hasLockedGate', label: 'Locked gate?', type: 'select', options: ['No', 'Yes'], required: true },
+        { key: 'petNames', label: 'Pet name(s)', type: 'text', required: false },
+        { key: 'yardNotes', label: 'Yard notes', type: 'textarea', required: false },
+      ];
     }
-    setForm((prev) => ({ ...start, ...prev }));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    if (service === 'playtime') {
+      return [
+        ...base,
+        { key: 'petNames', label: 'Dog name(s)', type: 'text', required: false },
+        { key: 'playPreferences', label: 'Play preferences (fetch, tug, etc.)', type: 'textarea', required: false },
+        { key: 'specialInstructions', label: 'Special instructions', type: 'textarea', required: false },
+      ];
+    }
+    if (service === 'litter') {
+      return [
+        ...base,
+        { key: 'indoorAccess', label: 'Indoor access instructions', type: 'textarea', required: true },
+        { key: 'catNames', label: 'Cat name(s)', type: 'text', required: false },
+        { key: 'litterBrand', label: 'Preferred litter brand (if any)', type: 'text', required: false },
+      ];
+    }
+    // Fallback
+    return base;
   }, [service]);
 
-  // Summary line
-  const summary = useMemo(() => {
-    const m = session?.metadata || {};
-    const parts = [
-      m.service,
-      m.frequency,
-      m.pets ? `${m.pets} pets` : null,
-    ];
-    if (m.service === "litter" && m.litterBoxes) parts.push(`${m.litterBoxes} litter boxes`);
-    if (m.service === "scooping" && m.yardSize) parts.push(`${m.yardSize} yard`);
-    return parts.filter(Boolean).join(" • ");
-  }, [session]);
-
-  function setVal(key, value) {
+  function updateField(key, value) {
     setForm((f) => ({ ...f, [key]: value }));
   }
 
   async function handleSubmit(e) {
     e.preventDefault();
-    setError("");
+    setSaveErr('');
 
     if (!user?.uid) {
-      setError("Please log in first.");
+      setSaveErr('Please log in first.');
       return;
     }
     if (!sessionId) {
-      setError("Missing session id.");
+      setSaveErr('Missing session id.');
       return;
     }
 
     setSaving(true);
     try {
-      await addDoc(collection(db, "intake_submissions"), {
-        uid: user.uid,
-        email: user.email || null,
-        session_id: sessionId,
-        stripe_customer_id: session?.customer_id || null,
-        stripe_mode: session?.mode || null,
+      await withTimeout(
+        addDoc(collection(db, 'intake_submissions'), {
+          uid: user.uid,
+          email: user.email || null,
+          session_id: sessionId,
+          stripe_customer_id: session?.customer_id || null,
+          stripe_mode: session?.mode || null,
+          // tie to purchased selections
+          service: service || null,
+          frequency: frequency || null,
+          pets: session?.metadata?.pets || null,
+          yardSize: session?.metadata?.yardSize || null,
+          litterBoxes: session?.metadata?.litterBoxes || null,
+          // the actual answers
+          ...form,
+          createdAt: serverTimestamp(),
+        }),
+        15000,
+        'Saving your details'
+      );
 
-        // Metadata from checkout (ties intake to purchase)
-        service: session?.metadata?.service || null,
-        frequency: session?.metadata?.frequency || null,
-        pets: session?.metadata?.pets || null,
-        yardSize: session?.metadata?.yardSize || null,
-        litterBoxes: session?.metadata?.litterBoxes || null,
-
-        // All form fields (service-specific)
-        ...form,
-
-        createdAt: serverTimestamp(),
-      });
-
-      alert("Thanks! Your details were submitted.");
-      // Optional post-submit redirect:
-      // window.location.href = "/billing";
-    } catch (e2) {
-      console.error(e2);
-      setError("Could not submit your details. Please try again.");
-    } finally {
       setSaving(false);
+      alert('Thanks! Your details were submitted.');
+      // Redirect them somewhere nice (billing or home)
+      window.location.href = '/billing';
+    } catch (e) {
+      console.error('Intake submit error:', e);
+      setSaving(false);
+      if (String(e?.message || '').includes('timed out')) {
+        setSaveErr('Save is taking too long. Please check your connection and try again.');
+      } else {
+        setSaveErr(e?.message || 'Could not submit your details. Please try again.');
+      }
     }
   }
 
-  if (loading) {
-    return <main style={{ maxWidth: 800, margin: "0 auto", padding: "1.25rem" }}>Loading…</main>;
+  if (!authReady) {
+    return (
+      <main style={{ maxWidth: 960, margin: '0 auto', padding: '1.5rem' }}>
+        <p>Loading…</p>
+      </main>
+    );
   }
 
   return (
-    <main style={{ maxWidth: 800, margin: "0 auto", padding: "1.25rem" }}>
-      <h1 style={{ margin: 0, fontSize: "1.5rem" }}>{config.title}</h1>
-      {summary && <p style={{ opacity: 0.85, marginTop: 6 }}>{summary}</p>}
+    <main
+      style={{
+        maxWidth: 960,
+        margin: '0 auto',
+        padding: '1.5rem clamp(16px, 4vw, 32px)',
+        fontSize: 'clamp(16px, 1.2vw, 18px)',
+      }}
+    >
+      <h1 style={{ fontSize: 'clamp(22px, 2.2vw, 30px)', marginBottom: '1rem' }}>
+        Service Intake Form
+      </h1>
 
-      {!user && (
-        <p style={{ color: "#7a0000" }}>
-          Please log in or sign up to submit your details.
-        </p>
-      )}
-      {error && <p style={{ color: "#b00020" }}>{error}</p>}
-
-      <form onSubmit={handleSubmit} style={{ display: "grid", gap: "0.9rem", marginTop: "1rem" }}>
-        {config.sections.map((section) => (
-          <Section key={section.title} title={section.title}>
-            <div style={{ display: "grid", gap: 12 }}>
-              {section.fields.map((f) => (
-                <Field key={f.key} label={f.label}>
-                  {f.type === "textarea" ? (
-                    <textarea
-                      value={form[f.key] ?? ""}
-                      onChange={(e) => setVal(f.key, e.target.value)}
-                      rows={3}
-                      placeholder={f.placeholder || ""}
-                      style={textarea}
-                    />
-                  ) : (
-                    <input
-                      value={form[f.key] ?? ""}
-                      onChange={(e) => setVal(f.key, e.target.value)}
-                      required={!!f.required}
-                      placeholder={f.placeholder || ""}
-                      style={input}
-                    />
-                  )}
-                </Field>
-              ))}
+      {loadingSession ? (
+        <div>Loading your session…</div>
+      ) : sessionErr ? (
+        <div style={{ color: '#b00020', marginBottom: '1rem' }}>{sessionErr}</div>
+      ) : (
+        <>
+          {session && (
+            <div
+              style={{
+                border: '1px solid #eee',
+                borderRadius: 12,
+                padding: '1rem',
+                background: '#fff',
+                marginBottom: '1rem',
+              }}
+            >
+              <div><strong>Service:</strong> {session?.metadata?.service || '—'}</div>
+              <div><strong>Frequency:</strong> {session?.metadata?.frequency || '—'}</div>
+              {session?.metadata?.yardSize && (
+                <div><strong>Yard size:</strong> {session?.metadata?.yardSize}</div>
+              )}
+              {session?.metadata?.pets && (
+                <div><strong># of pets:</strong> {session?.metadata?.pets}</div>
+              )}
+              {session?.metadata?.litterBoxes && (
+                <div><strong># of litter boxes:</strong> {session?.metadata?.litterBoxes}</div>
+              )}
             </div>
-          </Section>
-        ))}
+          )}
 
-        <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-          <button type="submit" disabled={!user || saving} style={primaryBtn}>
-            {saving ? "Submitting…" : "Submit details"}
-          </button>
-          <span style={{ fontSize: 12, opacity: 0.8 }}>
-            You can always update later by emailing{" "}
-            <a href="mailto:scoopdutykc@gmail.com">scoopdutykc@gmail.com</a>
-          </span>
-        </div>
-      </form>
+          {!user && (
+            <div
+              style={{
+                border: '1px solid #ffe08a',
+                background: '#fff8e1',
+                padding: '0.75rem 1rem',
+                borderRadius: 10,
+                marginBottom: '1rem',
+              }}
+            >
+              Please log in to submit your form.
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit} style={{ display: 'grid', gap: '0.9rem' }}>
+            {fields.map((f) => (
+              <div key={f.key} style={{ display: 'grid', gap: 6 }}>
+                <label style={{ fontWeight: 700 }}>
+                  {f.label} {f.required ? <span aria-hidden="true">*</span> : null}
+                </label>
+
+                {f.type === 'textarea' ? (
+                  <textarea
+                    value={form[f.key] || ''}
+                    onChange={(e) => updateField(f.key, e.target.value)}
+                    required={!!f.required}
+                    rows={4}
+                    style={{
+                      padding: '0.7rem 0.75rem',
+                      borderRadius: 10,
+                      border: '1px solid #ddd',
+                      fontSize: '1em',
+                    }}
+                  />
+                ) : f.type === 'select' ? (
+                  <select
+                    value={form[f.key] || (f.options?.[0] ?? '')}
+                    onChange={(e) => updateField(f.key, e.target.value)}
+                    required={!!f.required}
+                    style={{
+                      padding: '0.7rem 0.75rem',
+                      borderRadius: 10,
+                      border: '1px solid #ddd',
+                      fontSize: '1em',
+                    }}
+                  >
+                    {(f.options || []).map((opt) => (
+                      <option key={opt} value={opt}>{opt}</option>
+                    ))}
+                  </select>
+                ) : (
+                  <input
+                    type={f.type}
+                    value={form[f.key] || ''}
+                    onChange={(e) => updateField(f.key, e.target.value)}
+                    required={!!f.required}
+                    style={{
+                      padding: '0.7rem 0.75rem',
+                      borderRadius: 10,
+                      border: '1px solid #ddd',
+                      fontSize: '1em',
+                    }}
+                  />
+                )}
+              </div>
+            ))}
+
+            {saveErr && (
+              <div style={{ color: '#b00020', marginTop: '0.5rem' }}>{saveErr}</div>
+            )}
+
+            <button
+              type="submit"
+              disabled={!user || saving}
+              style={{
+                marginTop: '0.25rem',
+                padding: 'clamp(12px, 1.6vw, 14px) clamp(18px, 2.8vw, 24px)',
+                borderRadius: 12,
+                border: '1px solid #333',
+                background: '#333',
+                color: '#fff',
+                cursor: !user || saving ? 'not-allowed' : 'pointer',
+                fontWeight: 800,
+                fontSize: 'clamp(15px, 1.2vw, 18px)',
+                opacity: !user || saving ? 0.6 : 1,
+              }}
+            >
+              {saving ? 'Submitting…' : 'Submit'}
+            </button>
+          </form>
+        </>
+      )}
     </main>
-  );
-}
-
-/* ——— UI bits ——— */
-function Section({ title, children }) {
-  return (
-    <section style={{ border: "1px solid #eee", borderRadius: 12, padding: "1rem" }}>
-      <h3 style={{ margin: "0 0 0.5rem" }}>{title}</h3>
-      {children}
-    </section>
-  );
-}
-function Field({ label, children }) {
-  return (
-    <label style={{ display: "grid", gap: 6 }}>
-      <span style={{ fontSize: 12, opacity: 0.8 }}>{label}</span>
-      {children}
-    </label>
-  );
-}
-
-const input = { padding: "0.55rem 0.6rem", borderRadius: 8, border: "1px solid #ddd" };
-const textarea = { padding: "0.55rem 0.6rem", borderRadius: 8, border: "1px solid #ddd", resize: "vertical" };
-const primaryBtn = { padding: "0.65rem 1rem", borderRadius: 10, border: "1px solid #333", background: "#333", color: "#fff", fontWeight: 700, cursor: "pointer" };
-
-export default function IntakePage() {
-  // ✅ Suspense wrapper required for useSearchParams in App Router
-  return (
-    <Suspense fallback={<main style={{ maxWidth: 800, margin: "0 auto", padding: "1.25rem" }}>Loading…</main>}>
-      <IntakeInner />
-    </Suspense>
   );
 }
