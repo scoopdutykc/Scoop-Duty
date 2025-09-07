@@ -1,0 +1,76 @@
+Price ID,Product ID,Product Name,Product Statement Descriptor,Product Tax Code,Description,Created (UTC),Amount,Currency,Interval,Interval Count,Usage Type,Aggregate Usage,Billing Scheme,Trial Period Days,Tax Behavior
+price_1S4SQLRzSCSZiE1R6YBer4cZ,prod_T0Fl9WXQjeADCs,Yard Scooping,,,Onetime yard scooping,2025-09-06 20:09,25.00,usd,,,,,per_unit,,unspecified
+price_1S4SPURzSCSZiE1RrLUYru5Z,prod_T0SxxnXox7HB3A,Doggy Playtime,,,Onetime doggy playtime,2025-09-06 20:08,30.00,usd,,,,,per_unit,,unspecified
+price_1S4SP8RzSCSZiE1RGHuQugOG,prod_T0TJVaDZ43Bzbs,Kitty Litter Trade,,,Onetime litter trade,2025-09-06 20:08,20.00,usd,,,,,per_unit,,unspecified
+price_1S4SMkRzSCSZiE1R7NfCh5SK,prod_T0TJVaDZ43Bzbs,Kitty Litter Trade,,,"three weekly, 4+ boxes",2025-09-06 20:05,37.50,usd,week,1,licensed,,per_unit,,unspecified
+price_1S4SMkRzSCSZiE1RSsgGk0q0,prod_T0TJVaDZ43Bzbs,Kitty Litter Trade,,,"three weekly, 1 box",2025-09-06 20:05,22.50,usd,week,1,licensed,,per_unit,,unspecified
+price_1S4SMkRzSCSZiE1RTnjCXsc1,prod_T0TJVaDZ43Bzbs,Kitty Litter Trade,,,"once weekly, 4+ boxes",2025-09-06 20:05,25.00,usd,week,1,licensed,,per_unit,,unspecified
+price_1S4SMkRzSCSZiE1RDKVJEEhC,prod_T0TJVaDZ43Bzbs,Kitty Litter Trade,,,"twice weekly, 2 boxes",2025-09-06 20:05,22.50,usd,week,1,licensed,,per_unit,,unspecified
+price_1S4SMkRzSCSZiE1RQvJhd8Qf,prod_T0TJVaDZ43Bzbs,Kitty Litter Trade,,,"twice weekly, 4+ boxes",2025-09-06 20:05,32.50,usd,week,1,licensed,,per_unit,,unspecified
+price_1S4SMkRzSCSZiE1RJfqUq3lG,prod_T0TJVaDZ43Bzbs,Kitty Litter Trade,,,"once weekly, 1 box",2025-09-06 20:05,10.00,usd,week,1,licensed,,per_unit,,unspecified
+price_1S4SMkRzSCSZiE1RAdpBMbZo,prod_T0TJVaDZ43Bzbs,Kitty Litter Trade,,,"once weekly, 3 boxes",2025-09-06 20:05,20.00,usd,week,1,licensed,,per_unit,,unspecified
+price_1S4SMkRzSCSZiE1RzyBnrWuL,prod_T0TJVaDZ43Bzbs,Kitty Litter Trade,,,"twice weekly, 3 boxes",2025-09-06 20:05,27.50,usd,week,1,licensed,,per_unit,,unspecified
+price_1S4SMkRzSCSZiE1Ra3vgD0at,prod_T0TJVaDZ43Bzbs,Kitty Litter Trade,,,"three weekly, 3 boxes",2025-09-06 20:05,32.50,usd,week,1,licensed,,per_unit,,unspecified
+price_1S4SMkRzSCSZiE1Ry3Y3e4uj,prod_T0TJVaDZ43Bzbs,Kitty Litter Trade,,,"three weekly, 2 boxes",2025-09-06 20:05,27.50,usd,week,1,licensed,,per_unit,,unspecified
+price_1S4SMkRzSCSZiE1RNWAoEUNN,prod_T0TJVaDZ43Bzbs,Kitty Litter Trade,,,"twice weekly, 1 box",2025-09-06 20:05,17.50,usd,week,1,licensed,,per_unit,,unspecified
+price_1S4SMjRzSCSZiE1RYjwR8hZA,prod_T0TJVaDZ43Bzbs,Kitty Litter Trade,,,"once weekly, 2 boxes",2025-09-06 20:05,15.00,usd,week,1,licensed,,per_unit,,unspecified
+price_1S4S97RzSCSZiE1R4TlRQ9SJ,prod_T0SxxnXox7HB3A,Doggy Playtime,,,"three weekly, 5+ dogs",2025-09-06 19:51,85.00,usd,week,1,licensed,,per_unit,,unspecified
+price_1S4S8uRzSCSZiE1Rjmo5rn1Q,prod_T0SxxnXox7HB3A,Doggy Playtime,,,"twice weekly, 5+ dogs",2025-09-06 19:51,75.00,usd,week,1,licensed,,per_unit,,unspecified
+price_1S4S8hRzSCSZiE1RA92U91Ga,prod_T0SxxnXox7HB3A,Doggy Playtime,,,"one weekly, 5+ dogs",2025-09-06 19:51,60.00,usd,week,1,licensed,,per_unit,,unspecified
+price_1S4S8HRzSCSZiE1RJH9QitJg,prod_T0SxxnXox7HB3A,Doggy Playtime,,,"three weekly, 4 dogs",2025-09-06 19:50,75.00,usd,week,1,licensed,,per_unit,,unspecified
+price_1S4S83RzSCSZiE1RhQkTV8lH,prod_T0SxxnXox7HB3A,Doggy Playtime,,,"twice weekly, 4 dogs",2025-09-06 19:50,65.00,usd,week,1,licensed,,per_unit,,unspecified
+price_1S4S7oRzSCSZiE1Rfy3pd2fO,prod_T0SxxnXox7HB3A,Doggy Playtime,,,"once weekly, 4 dogs",2025-09-06 19:50,50.00,usd,week,1,licensed,,per_unit,,unspecified
+price_1S4S6xRzSCSZiE1Ri8Juk6tL,prod_T0SxxnXox7HB3A,Doggy Playtime,,,"three weekly, 3 dogs",2025-09-06 19:49,65.00,usd,week,1,licensed,,per_unit,,unspecified
+price_1S4S6SRzSCSZiE1RHaGiU7oO,prod_T0SxxnXox7HB3A,Doggy Playtime,,,"twice weekly, 3 dogs",2025-09-06 19:48,55.00,usd,week,1,licensed,,per_unit,,unspecified
+price_1S4S5xRzSCSZiE1RdpJPI75j,prod_T0SxxnXox7HB3A,Doggy Playtime,,,"once weekly, 3 dogs",2025-09-06 19:48,40.00,usd,week,1,licensed,,per_unit,,unspecified
+price_1S4S4YRzSCSZiE1RuTO78vgQ,prod_T0SxxnXox7HB3A,Doggy Playtime,,,"three weekly, 2 dogs",2025-09-06 19:46,55.00,usd,week,1,licensed,,per_unit,,unspecified
+price_1S4S3hRzSCSZiE1Re5I1ytX6,prod_T0SxxnXox7HB3A,Doggy Playtime,,,"twice weekly, 2 dogs",2025-09-06 19:46,45.00,usd,week,1,licensed,,per_unit,,unspecified
+price_1S4S2rRzSCSZiE1RAqBqGoBL,prod_T0SxxnXox7HB3A,Doggy Playtime,,,"once weekly, 2 dogs",2025-09-06 19:45,30.00,usd,week,1,licensed,,per_unit,,unspecified
+price_1S4S2DRzSCSZiE1RAC39V5di,prod_T0SxxnXox7HB3A,Doggy Playtime,,,"three weekly, 1 dog",2025-09-06 19:44,45.00,usd,week,1,licensed,,per_unit,,unspecified
+price_1S4S1tRzSCSZiE1RERtiU3Zw,prod_T0SxxnXox7HB3A,Doggy Playtime,,,"twice weekly, 1 dog",2025-09-06 19:44,35.00,usd,week,1,licensed,,per_unit,,unspecified
+price_1S4S1SRzSCSZiE1Rs3s26GTk,prod_T0SxxnXox7HB3A,Doggy Playtime,,,"once weekly, 1 dog",2025-09-06 19:43,20.00,usd,week,1,licensed,,per_unit,,unspecified
+price_1S4RxKRzSCSZiE1RjnD3PZbL,prod_T0Fl9WXQjeADCs,Yard Scooping,,,"three weekly, 5+ dogs, large yard",2025-09-06 19:39,60.00,usd,week,1,licensed,,per_unit,,unspecified
+price_1S4RwxRzSCSZiE1R7jjcmcMS,prod_T0Fl9WXQjeADCs,Yard Scooping,,,"Three weekly, 5+ dogs, medium yard",2025-09-06 19:39,55.00,usd,week,1,licensed,,per_unit,,unspecified
+price_1S4RKQRzSCSZiE1RmyKeMoYZ,prod_T0Fl9WXQjeADCs,Yard Scooping,,,"three weekly, 5+ dogs, small yard",2025-09-06 18:59,50.00,usd,week,1,licensed,,per_unit,,unspecified
+price_1S4RJrRzSCSZiE1RC0HItdl5,prod_T0Fl9WXQjeADCs,Yard Scooping,,,"three weekly, 4 dogs, large yard",2025-09-06 18:58,55.00,usd,week,1,licensed,,per_unit,,unspecified
+price_1S4RJTRzSCSZiE1RAbqPqxWk,prod_T0Fl9WXQjeADCs,Yard Scooping,,,"three weekly, 4 dogs, medium yard",2025-09-06 18:58,50.00,usd,week,1,licensed,,per_unit,,unspecified
+price_1S4RJ7RzSCSZiE1R38EK1Prs,prod_T0Fl9WXQjeADCs,Yard Scooping,,,"three weekly, 4 dogs, small yard",2025-09-06 18:57,45.00,usd,week,1,licensed,,per_unit,,unspecified
+price_1S4RIoRzSCSZiE1Rb3O6sGSb,prod_T0Fl9WXQjeADCs,Yard Scooping,,,"three weekly, 3 dogs, large yard",2025-09-06 18:57,50.00,usd,week,1,licensed,,per_unit,,unspecified
+price_1S4RI4RzSCSZiE1R7qofG6ZP,prod_T0Fl9WXQjeADCs,Yard Scooping,,,"three weekly, 3 dogs, medium yard",2025-09-06 18:56,45.00,usd,week,1,licensed,,per_unit,,unspecified
+price_1S4RHcRzSCSZiE1RhAE1PWEK,prod_T0Fl9WXQjeADCs,Yard Scooping,,,"three weekly, 3 dogs, small yard",2025-09-06 18:56,40.00,usd,week,1,licensed,,per_unit,,unspecified
+price_1S4RGURzSCSZiE1RTvSi6W2k,prod_T0Fl9WXQjeADCs,Yard Scooping,,,"three weekly, 2 dogs, large yard",2025-09-06 18:55,45.00,usd,week,1,licensed,,per_unit,,unspecified
+price_1S4RFvRzSCSZiE1RzTuZUfES,prod_T0Fl9WXQjeADCs,Yard Scooping,,,"three weekly, 2 dogs, medium yard",2025-09-06 18:54,40.00,usd,week,1,licensed,,per_unit,,unspecified
+price_1S4RFZRzSCSZiE1Rm8ko1qkC,prod_T0Fl9WXQjeADCs,Yard Scooping,,,"three weekly, 2 dogs, small yard",2025-09-06 18:54,35.00,usd,week,1,licensed,,per_unit,,unspecified
+price_1S4RFCRzSCSZiE1RHUYYE5Bt,prod_T0Fl9WXQjeADCs,Yard Scooping,,,"three weekly, 1 dog, large yard",2025-09-06 18:53,40.00,usd,week,1,licensed,,per_unit,,unspecified
+price_1S4REVRzSCSZiE1RWRtDQEXV,prod_T0Fl9WXQjeADCs,Yard Scooping,,,"three weekly, 1 dog, medium yard",2025-09-06 18:53,35.00,usd,week,1,licensed,,per_unit,,unspecified
+price_1S4REARzSCSZiE1RQbt0iX0f,prod_T0Fl9WXQjeADCs,Yard Scooping,,,"three weekly, 1 dog, small yard",2025-09-06 18:52,30.00,usd,week,1,licensed,,per_unit,,unspecified
+price_1S4RBPRzSCSZiE1RWvMkUaNg,prod_T0Fl9WXQjeADCs,Yard Scooping,,,"twice weekly, 5 dogs, large yard",2025-09-06 18:49,55.00,usd,week,1,licensed,,per_unit,,unspecified
+price_1S4RB7RzSCSZiE1Rnj8Orwaj,prod_T0Fl9WXQjeADCs,Yard Scooping,,,"twice weekly, 4 dogs, large yard",2025-09-06 18:49,50.00,usd,week,1,licensed,,per_unit,,unspecified
+price_1S4RAQRzSCSZiE1Rln1WsHE1,prod_T0Fl9WXQjeADCs,Yard Scooping,,,"twice weekly, 3 dogs, large yard",2025-09-06 18:48,45.00,usd,week,1,licensed,,per_unit,,unspecified
+price_1S4RA8RzSCSZiE1RjYqqmT49,prod_T0Fl9WXQjeADCs,Yard Scooping,,,"twice weekly, 2 dogs, large yard",2025-09-06 18:48,40.00,usd,week,1,licensed,,per_unit,,unspecified
+price_1S4R9fRzSCSZiE1R4sVC1peo,prod_T0Fl9WXQjeADCs,Yard Scooping,,,"twice weekly, 5+ dogs, medium yard",2025-09-06 18:48,50.00,usd,week,1,licensed,,per_unit,,unspecified
+price_1S4R9LRzSCSZiE1RExy6g1TQ,prod_T0Fl9WXQjeADCs,Yard Scooping,,,"twice weekly, 4 dogs, medium yard",2025-09-06 18:47,45.00,usd,week,1,licensed,,per_unit,,unspecified
+price_1S4R8uRzSCSZiE1R9UDz913w,prod_T0Fl9WXQjeADCs,Yard Scooping,,,"twice weekly, 3 dogs, medium yard",2025-09-06 18:47,40.00,usd,week,1,licensed,,per_unit,,unspecified
+price_1S4R7rRzSCSZiE1RGBu448IQ,prod_T0Fl9WXQjeADCs,Yard Scooping,,,"twice weekly, 2 dogs, medium yard",2025-09-06 18:46,35.00,usd,week,1,licensed,,per_unit,,unspecified
+price_1S4R72RzSCSZiE1RI2EfZcog,prod_T0Fl9WXQjeADCs,Yard Scooping,,,"twice weekly, 5+ dogs, small yard",2025-09-06 18:45,45.00,usd,week,1,licensed,,per_unit,,unspecified
+price_1S4R6eRzSCSZiE1ReY37iOPp,prod_T0Fl9WXQjeADCs,Yard Scooping,,,"twice weekly, 4 dogs, small yard",2025-09-06 18:45,40.00,usd,week,1,licensed,,per_unit,,unspecified
+price_1S4R6ARzSCSZiE1RhUbHCrYA,prod_T0Fl9WXQjeADCs,Yard Scooping,,,"twice weekly, 1 dog, large yard",2025-09-06 18:44,35.00,usd,week,1,licensed,,per_unit,,unspecified
+price_1S4R5bRzSCSZiE1REa5M4LIA,prod_T0Fl9WXQjeADCs,Yard Scooping,,,"twice weekly, 1 dog, medium yard",2025-09-06 18:43,30.00,usd,week,1,licensed,,per_unit,,unspecified
+price_1S4R4dRzSCSZiE1RwOjpcmiV,prod_T0Fl9WXQjeADCs,Yard Scooping,,,"twice weekly, 3 dogs, small yard",2025-09-06 18:42,35.00,usd,week,1,licensed,,per_unit,,unspecified
+price_1S4R4KRzSCSZiE1RO2k16aCE,prod_T0Fl9WXQjeADCs,Yard Scooping,,,"twice weekly, 2 dogs, small yard",2025-09-06 18:42,30.00,usd,week,1,licensed,,per_unit,,unspecified
+price_1S4R1CRzSCSZiE1RGBpPP7OO,prod_T0Fl9WXQjeADCs,Yard Scooping,,,"once weekly, 5+ dogs, large yard",2025-09-06 18:39,50.00,usd,week,1,licensed,,per_unit,,unspecified
+price_1S4R0aRzSCSZiE1RY5FYLhxr,prod_T0Fl9WXQjeADCs,Yard Scooping,,,"once weekly, 5+ dogs, medium yard",2025-09-06 18:38,45.00,usd,week,1,licensed,,per_unit,,unspecified
+price_1S4QzzRzSCSZiE1RVgSAPbCn,prod_T0Fl9WXQjeADCs,Yard Scooping,,,"once weekly, 5+ dogs, small yard",2025-09-06 18:38,40.00,usd,week,1,licensed,,per_unit,,unspecified
+price_1S4Qz9RzSCSZiE1RyVU98RV1,prod_T0Fl9WXQjeADCs,Yard Scooping,,,"once weekly, 4 dogs, large yard",2025-09-06 18:37,45.00,usd,month,1,licensed,,per_unit,,unspecified
+price_1S4QyuRzSCSZiE1RTR1e4Ndc,prod_T0Fl9WXQjeADCs,Yard Scooping,,,"once weekly, 4 dogs, medium yard",2025-09-06 18:37,40.00,usd,week,1,licensed,,per_unit,,unspecified
+price_1S4QwLRzSCSZiE1RRbeRHoIL,prod_T0Fl9WXQjeADCs,Yard Scooping,,,"once weekly, 4 dogs, small yard",2025-09-06 18:34,35.00,usd,week,1,licensed,,per_unit,,unspecified
+price_1S4QsrRzSCSZiE1R5f6jtsrB,prod_T0Fl9WXQjeADCs,Yard Scooping,,,"once weekly, 3 dogs, large yard",2025-09-06 18:30,35.00,usd,week,1,licensed,,per_unit,,unspecified
+price_1S4QrhRzSCSZiE1RGqGvgW6S,prod_T0Fl9WXQjeADCs,Yard Scooping,,,"once weekly, 3 dogs, medium yard",2025-09-06 18:29,30.00,usd,week,1,licensed,,per_unit,,unspecified
+price_1S4QqsRzSCSZiE1RsVWQpe3C,prod_T0Fl9WXQjeADCs,Yard Scooping,,,"Once weekly, 2 dogs, large yard",2025-09-06 18:28,30.00,usd,week,1,licensed,,per_unit,,unspecified
+price_1S4Qq9RzSCSZiE1RykiEaQaV,prod_T0Fl9WXQjeADCs,Yard Scooping,,,"Once weekly, 2 dogs, medium yard",2025-09-06 18:27,25.00,usd,week,1,licensed,,per_unit,,unspecified
+price_1S4QkuRzSCSZiE1RkFC13VKH,prod_T0Fl9WXQjeADCs,Yard Scooping,,,"Twice weekly, 1 dog, small yard",2025-09-06 18:22,25.00,usd,week,1,licensed,,per_unit,,unspecified
+price_1S4QdVRzSCSZiE1RKpYBWYke,prod_T0Fl9WXQjeADCs,Yard Scooping,,,"once weekly, 2 dogs, small yard",2025-09-06 18:14,20.00,usd,week,1,licensed,,per_unit,,unspecified
+price_1S4QdVRzSCSZiE1RiET0HGih,prod_T0Fl9WXQjeADCs,Yard Scooping,,,"once weekly, 1 dog, large yard",2025-09-06 18:14,25.00,usd,week,1,licensed,,per_unit,,unspecified
+price_1S4QdVRzSCSZiE1RGlbtpuaU,prod_T0Fl9WXQjeADCs,Yard Scooping,,,"once weekly, 1 dog, medium yard",2025-09-06 18:14,20.00,usd,week,1,licensed,,per_unit,,unspecified
+price_1S4QdVRzSCSZiE1RAeefk5Lc,prod_T0Fl9WXQjeADCs,Yard Scooping,,,"once weekly, 3 dogs, small yard",2025-09-06 18:14,25.00,usd,week,1,licensed,,per_unit,,unspecified
+price_1S4FGARzSCSZiE1RcXQ5NV2K,prod_T0Fl9WXQjeADCs,Yard Scooping,,,"once weekly, 1 dog, small yard",2025-09-06 06:06,15.00,usd,week,1,licensed,,per_unit,,unspecified
