@@ -3,7 +3,7 @@
 
 import { useEffect, useState } from "react";
 import { onAuthStateChanged } from "firebase/auth";
-import { auth, db } from "../../lib/firebase";
+import { auth, db } from "../lib/firebase";
 import { addDoc, collection, serverTimestamp } from "firebase/firestore";
 
 // read a query param from window safely (no useSearchParams)
