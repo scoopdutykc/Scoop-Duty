@@ -1,342 +1,177 @@
-// app/intake/IntakeClient.js
-"use client";
+'use client';
 
-import { useEffect, useMemo, useState } from "react";
-import { useSearchParams } from "next/navigation";
-import { onAuthStateChanged } from "firebase/auth";
-import { auth, db } from "../../lib/firebase";
-import { addDoc, collection, serverTimestamp } from "firebase/firestore";
-
-/** ---------------------------
- *  Form configs by service
- *  ---------------------------
- *  Each service defines sections and fields.
- *  All answers are saved into Firestore as a flat object alongside your metadata.
- */
-const FORM_CONFIGS = {
-  scooping: {
-    title: "Scooping Intake",
-    sections: [
-      {
-        title: "Contact",
-        fields: [
-          { key: "fullName", label: "Full name", required: true, placeholder: "" },
-          { key: "phone", label: "Phone", required: true, placeholder: "" },
-        ],
-      },
-      {
-        title: "Service Address",
-        fields: [
-          { key: "address1", label: "Address line 1", required: true },
-          { key: "address2", label: "Address line 2" },
-          { key: "city", label: "City", required: true },
-          { key: "state", label: "State", required: true },
-          { key: "zip", label: "ZIP", required: true },
-        ],
-      },
-      {
-        title: "Access & Pets",
-        fields: [
-          { key: "gateCode", label: "Gate code / Access notes" },
-          { key: "wasteBinLocation", label: "Front Yard, Backyard, or Both?" },
-          { key: "petsNames", label: "Pet name(s)" },
-          { key: "yardNotes", label: "Yard / special notes", type: "textarea" },
-        ],
-      },
-      {
-        title: "Scheduling Preference",
-        fields: [
-          { key: "preferredDay", label: "Preferred day", placeholder: "e.g., Tuesdays" },
-          { key: "preferredTimeWindow", label: "Preferred time window", placeholder: "e.g., 1–3 PM" },
-          { key: "additionalNotes", label: "Anything else we should know?", type: "textarea" },
-        ],
-      },
-    ],
-  },
-
-  playtime: {
-    title: "Doggy Playtime Intake",
-    sections: [
-      {
-        title: "Contact",
-        fields: [
-          { key: "fullName", label: "Full name", required: true },
-          { key: "phone", label: "Phone", required: true },
-        ],
-      },
-      {
-        title: "Service Address",
-        fields: [
-          { key: "address1", label: "Address line 1", required: true },
-          { key: "address2", label: "Address line 2" },
-          { key: "city", label: "City", required: true },
-          { key: "state", label: "State", required: true },
-          { key: "zip", label: "ZIP", required: true },
-        ],
-      },
-      {
-        title: "Pet Details",
-        fields: [
-          { key: "petsNames", label: "Dog name(s)" },
-          { key: "temperament", label: "Temperament / behavioral notes", type: "textarea" },
-          { key: "playPreferences", label: "Play preferences (toys, games)", type: "textarea" },
-        ],
-      },
-      {
-        title: "Access & Scheduling",
-        fields: [
-          { key: "gateCode", label: "Gate code / Access notes" },
-          { key: "preferredDay", label: "Preferred day", placeholder: "e.g., Tuesdays" },
-          { key: "preferredTimeWindow", label: "Preferred time window", placeholder: "e.g., 1–3 PM" },
-          { key: "additionalNotes", label: "Anything else we should know?", type: "textarea" },
-        ],
-      },
-    ],
-  },
-
-  litter: {
-    title: "Kitty Litter Trade Intake",
-    sections: [
-      {
-        title: "Contact",
-        fields: [
-          { key: "fullName", label: "Full name", required: true },
-          { key: "phone", label: "Phone", required: true },
-        ],
-      },
-      {
-        title: "Service Address",
-        fields: [
-          { key: "address1", label: "Address line 1", required: true },
-          { key: "address2", label: "Address line 2" },
-          { key: "city", label: "City", required: true },
-          { key: "state", label: "State", required: true },
-          { key: "zip", label: "ZIP", required: true },
-        ],
-      },
-      {
-        title: "Litter Details",
-        fields: [
-          { key: "boxLocations", label: "Where are the litter box(es) located?", type: "textarea" },
-          { key: "catsNames", label: "Cat name(s)" },
-          { key: "homeNotes", label: "Apartment/House details or special notes", type: "textarea" },
-        ],
-      },
-      {
-        title: "Scheduling Preference",
-        fields: [
-          { key: "preferredDay", label: "Preferred day", placeholder: "e.g., Tuesdays" },
-          { key: "preferredTimeWindow", label: "Preferred time window", placeholder: "e.g., 1–3 PM" },
-          { key: "additionalNotes", label: "Anything else we should know?", type: "textarea" },
-        ],
-      },
-    ],
-  },
-};
+import { useEffect, useState } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
+import { onAuthStateChanged } from 'firebase/auth';
+import { auth, db } from '../lib/firebase';
+import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
 
 export default function IntakeClient() {
-  const params = useSearchParams();
-  const sessionId = params.get("session_id") || "";
+  const router = useRouter();
+  const searchParams = useSearchParams();
 
   const [user, setUser] = useState(null);
-  const [session, setSession] = useState(null);
-  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState("");
+  const [error, setError] = useState('');
 
-  // Which service was purchased (from Stripe session metadata)
-  const service = (session?.metadata?.service || "").toLowerCase() || "scooping";
-  const config = FORM_CONFIGS[service] || FORM_CONFIGS.scooping;
+  // --- form fields (mirror your current UI) ---
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName]   = useState('');
+  const [address, setAddress]     = useState('');
+  const [city, setCity]           = useState('');
+  const [state, setState]         = useState('MO');
+  const [zip, setZip]             = useState('');
+  const [gateCode, setGateCode]   = useState('');
+  const [notes, setNotes]         = useState('');
+  const [pets, setPets]           = useState('1');
+  const [yardSize, setYardSize]   = useState('small');
+  const [poopCan, setPoopCan]     = useState('yes');
+  const [wasteLocation, setWasteLocation] = useState('haul_away'); // matches your new options
+  const [startDate, setStartDate] = useState('');
 
-  // Flat form state (fields are defined by selected service config)
-  const [form, setForm] = useState({}); // we will seed it after we know config
+  // Preload selections from Stripe metadata / URL if present
+  useEffect(() => {
+    const q = (k) => searchParams.get(k) || '';
+    // Optional: hydrate any fields from querystring if you pass them through Checkout/Success
+  }, [searchParams]);
 
-  // Auth
+  // Watch auth state
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, (u) => setUser(u));
     return () => unsub();
   }, []);
 
-  // Fetch the checkout session to read metadata (service, frequency, etc.)
-  useEffect(() => {
-    let cancelled = false;
-    async function load() {
-      if (!sessionId) {
-        setLoading(false);
-        return;
-      }
-      try {
-        const res = await fetch(`/api/payments/session?session_id=${encodeURIComponent(sessionId)}`);
-        const data = await res.json().catch(() => null);
-        if (res.ok && !cancelled) {
-          setSession(data);
-        } else if (!cancelled) {
-          console.error("Intake: session fetch failed", { status: res.status, data, sessionId });
-          setError(data?.error || `Failed to load session (status ${res.status}).`);
-        }
-      } catch (e) {
-        if (!cancelled) setError("Failed to load session.");
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    }
-    load();
-    return () => { cancelled = true; };
-  }, [sessionId]);
-
-  // Initialize form keys when config changes
-  useEffect(() => {
-    // Build a default empty object with all keys present
-    const start = {};
-    for (const section of config.sections) {
-      for (const field of section.fields) {
-        if (start[field.key] === undefined) start[field.key] = "";
-      }
-    }
-    setForm((prev) => ({ ...start, ...prev }));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [service]);
-
-  // Summary line
-  const summary = useMemo(() => {
-    const m = session?.metadata || {};
-    const parts = [
-      m.service,
-      m.frequency,
-      m.pets ? `${m.pets} pets` : null,
-    ];
-    if (m.service === "litter" && m.litterBoxes) parts.push(`${m.litterBoxes} litter boxes`);
-    if (m.service === "scooping" && m.yardSize) parts.push(`${m.yardSize} yard`);
-    return parts.filter(Boolean).join(" • ");
-  }, [session]);
-
-  function setVal(key, value) {
-    setForm((f) => ({ ...f, [key]: value }));
-  }
-
   async function handleSubmit(e) {
     e.preventDefault();
-    setError("");
-
     if (!user?.uid) {
-      setError("Please log in first.");
-      return;
-    }
-    if (!sessionId) {
-      setError("Missing session id.");
+      setError('Please log in to submit your intake.');
       return;
     }
 
     setSaving(true);
+    setError('');
+
     try {
-      await addDoc(collection(db, "intake_submissions"), {
+      const payload = {
         uid: user.uid,
-        email: user.email || null,
-        session_id: sessionId,
-        stripe_customer_id: session?.customer_id || null,
-        stripe_mode: session?.mode || null,
-
-        // Metadata from checkout (ties intake to purchase)
-        service: session?.metadata?.service || null,
-        frequency: session?.metadata?.frequency || null,
-        pets: session?.metadata?.pets || null,
-        yardSize: session?.metadata?.yardSize || null,
-        litterBoxes: session?.metadata?.litterBoxes || null,
-
-        // All form fields (service-specific)
-        ...form,
-
+        email: user.email || '',
         createdAt: serverTimestamp(),
-      });
 
-      alert("Thanks! Your details were submitted.");
-      // Optional post-submit redirect:
-      // window.location.href = "/billing";
+        // form fields
+        firstName,
+        lastName,
+        address,
+        city,
+        state,
+        zip,
+        gateCode,
+        notes,
+        pets,
+        yardSize,
+        poopCan,
+        wasteLocation,
+        startDate,
+
+        // optional context from checkout
+        service: searchParams.get('service') || '',
+        frequency: searchParams.get('frequency') || '',
+        litterBoxes: searchParams.get('litterBoxes') || '',
+        session_id: searchParams.get('session_id') || '',
+      };
+
+      await addDoc(collection(db, 'intake_submissions'), payload);
+
+      // Success: popup then redirect to billing
+      // (Using native alert keeps it super simple and avoids adding a toast lib)
+      alert('Thanks for signing up! We will email you shortly with more details.');
+      router.push('/billing');
     } catch (e2) {
-      console.error("Intake submit error:", e2);
-      setError("Could not submit your details. Please try again.");
+      console.error('Intake submit error:', e2);
+      const msg = e2?.message?.includes('Missing or insufficient permissions')
+        ? 'We could not save your details due to permissions. Please make sure you are logged in and try again.'
+        : 'Could not submit your details. Please try again.';
+      setError(msg);
     } finally {
       setSaving(false);
     }
   }
 
-  if (loading) {
-    return <main style={{ maxWidth: 800, margin: "0 auto", padding: "1.25rem" }}>Loading…</main>;
-  }
-
+  // --- Simple form UI (use your existing styled markup; just wire the handlers/values) ---
   return (
-    <main style={{ maxWidth: 800, margin: "0 auto", padding: "1.25rem" }}>
-      <h1 style={{ margin: 0, fontSize: "1.5rem" }}>{config.title}</h1>
-      {summary && <p style={{ opacity: 0.85, marginTop: 6 }}>{summary}</p>}
-
-      {!user && (
-        <p style={{ color: "#7a0000" }}>
-          Please log in or sign up to submit your details.
-        </p>
-      )}
-      {error && <p style={{ color: "#b00020" }}>{error}</p>}
-
-      <form onSubmit={handleSubmit} style={{ display: "grid", gap: "0.9rem", marginTop: "1rem" }}>
-        {config.sections.map((section) => (
-          <Section key={section.title} title={section.title}>
-            <div style={{ display: "grid", gap: 12 }}>
-              {section.fields.map((f) => (
-                <Field key={f.key} label={f.label}>
-                  {f.type === "textarea" ? (
-                    <textarea
-                      value={form[f.key] ?? ""}
-                      onChange={(e) => setVal(f.key, e.target.value)}
-                      rows={3}
-                      placeholder={f.placeholder || ""}
-                      style={textarea}
-                    />
-                  ) : (
-                    <input
-                      value={form[f.key] ?? ""}
-                      onChange={(e) => setVal(f.key, e.target.value)}
-                      required={!!f.required}
-                      placeholder={f.placeholder || ""}
-                      style={input}
-                    />
-                  )}
-                </Field>
-              ))}
-            </div>
-          </Section>
-        ))}
-
-        <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-          <button type="submit" disabled={!user || saving} style={primaryBtn}>
-            {saving ? "Submitting…" : "Submit details"}
-          </button>
-          <span style={{ fontSize: 12, opacity: 0.8 }}>
-            You can always update later by emailing{" "}
-            <a href="mailto:scoopdutykc@gmail.com">scoopdutykc@gmail.com</a>
-          </span>
+    <form onSubmit={handleSubmit} style={{ display: 'grid', gap: 12, maxWidth: 720 }}>
+      {error && (
+        <div style={{ background: '#ffe3e3', border: '1px solid #ffb3b3', borderRadius: 8, padding: '10px 12px', color: '#900' }}>
+          {error}
         </div>
-      </form>
-    </main>
-  );
-}
+      )}
 
-/* ——— UI bits ——— */
-function Section({ title, children }) {
-  return (
-    <section style={{ border: "1px solid #eee", borderRadius: 12, padding: "1rem" }}>
-      <h3 style={{ margin: "0 0 0.5rem" }}>{title}</h3>
-      {children}
-    </section>
-  );
-}
-function Field({ label, children }) {
-  return (
-    <label style={{ display: "grid", gap: 6 }}>
-      <span style={{ fontSize: 12, opacity: 0.8 }}>{label}</span>
-      {children}
-    </label>
-  );
-}
+      <div style={{ display: 'grid', gap: 12, gridTemplateColumns: '1fr 1fr' }}>
+        <input required placeholder="First name" value={firstName} onChange={(e) => setFirstName(e.target.value)} />
+        <input required placeholder="Last name" value={lastName} onChange={(e) => setLastName(e.target.value)} />
+      </div>
 
-const input = { padding: "0.55rem 0.6rem", borderRadius: 8, border: "1px solid #ddd" };
-const textarea = { padding: "0.55rem 0.6rem", borderRadius: 8, border: "1px solid #ddd", resize: "vertical" };
-const primaryBtn = { padding: "0.65rem 1rem", borderRadius: 10, border: "1px solid #333", background: "#333", color: "#fff", fontWeight: 700, cursor: "pointer" };
+      <input required placeholder="Street address" value={address} onChange={(e) => setAddress(e.target.value)} />
+      <div style={{ display: 'grid', gap: 12, gridTemplateColumns: '1.2fr .8fr .6fr .6fr' }}>
+        <input required placeholder="City" value={city} onChange={(e) => setCity(e.target.value)} />
+        <input required placeholder="State" value={state} onChange={(e) => setState(e.target.value)} />
+        <input required placeholder="ZIP" value={zip} onChange={(e) => setZip(e.target.value)} />
+        <input placeholder="Gate code (optional)" value={gateCode} onChange={(e) => setGateCode(e.target.value)} />
+      </div>
+
+      <textarea placeholder="Notes for the tech (optional)" value={notes} onChange={(e) => setNotes(e.target.value)} rows={4} />
+
+      <div style={{ display: 'grid', gap: 12, gridTemplateColumns: 'repeat(3, 1fr)' }}>
+        <label>
+          # of pets
+          <select value={pets} onChange={(e) => setPets(e.target.value)}>
+            <option value="1">1</option><option value="2">2</option><option value="3">3</option>
+            <option value="4">4</option><option value="5+">5+</option>
+          </select>
+        </label>
+        <label>
+          Yard size
+          <select value={yardSize} onChange={(e) => setYardSize(e.target.value)}>
+            <option value="small">Small</option><option value="medium">Medium</option><option value="large">Large</option>
+          </select>
+        </label>
+        <label>
+          Poop can accessible?
+          <select value={poopCan} onChange={(e) => setPoopCan(e.target.value)}>
+            <option value="yes">Yes</option><option value="no">No</option>
+          </select>
+        </label>
+      </div>
+
+      <div style={{ display: 'grid', gap: 12, gridTemplateColumns: '1fr 1fr' }}>
+        <label>
+          Waste handling
+          <select value={wasteLocation} onChange={(e) => setWasteLocation(e.target.value)}>
+            <option value="haul_away">Haul it away</option>
+            <option value="bag_in_can">Bag in my outdoor trash can</option>
+          </select>
+        </label>
+
+        <label>
+          Preferred start date
+          <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
+        </label>
+      </div>
+
+      <button
+        type="submit"
+        disabled={saving}
+        style={{
+          padding: '12px 18px',
+          borderRadius: 10,
+          border: '1px solid #222',
+          background: '#222',
+          color: '#fff',
+          fontWeight: 700,
+          cursor: saving ? 'not-allowed' : 'pointer',
+        }}
+      >
+        {saving ? 'Submitting…' : 'Submit'}
+      </button>
+    </form>
+  );
+}
