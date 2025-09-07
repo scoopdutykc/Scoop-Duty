@@ -1,43 +1,38 @@
-import Stripe from "stripe";
-
+// app/api/payments/session/route.js
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
+import Stripe from "stripe";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
   apiVersion: "2023-10-16",
 });
 
-export async function GET(req) {
+export async function GET(request) {
   try {
-    const { searchParams } = new URL(req.url);
+    const { searchParams } = new URL(request.url);
     const session_id = searchParams.get("session_id");
+
     if (!session_id) {
-      return new Response(JSON.stringify({ error: "Missing session_id" }), { status: 400 });
+      return new Response(JSON.stringify({ error: "Missing session_id" }), {
+        status: 400,
+        headers: { "content-type": "application/json" },
+      });
     }
 
     const session = await stripe.checkout.sessions.retrieve(session_id, {
-      expand: ["customer", "line_items.data.price.product"],
+      expand: ["line_items.data.price.product", "customer"],
     });
 
-    const payload = {
-      id: session.id,
-      customer_email: session.customer_details?.email || session.customer_email || null,
-      customer_id: typeof session.customer === "string" ? session.customer : session.customer?.id || null,
-      status: session.status,
-      mode: session.mode,
-      metadata: session.metadata || {},
-      line_items: (session.line_items?.data || []).map((li) => ({
-        description: li.description,
-        qty: li.quantity,
-        price_id: li.price?.id || null,
-        product: li.price?.product && typeof li.price.product !== "string"
-          ? { id: li.price.product.id, name: li.price.product.name }
-          : null,
-      })),
-    };
-
-    return new Response(JSON.stringify(payload), { status: 200 });
+    return new Response(JSON.stringify({ session }), {
+      status: 200,
+      headers: { "content-type": "application/json" },
+    });
   } catch (err) {
-    console.error("session lookup error:", err);
-    return new Response(JSON.stringify({ error: err.message || "Stripe error" }), { status: 500 });
+    return new Response(JSON.stringify({ error: err.message || "Session lookup error" }), {
+      status: 500,
+      headers: { "content-type": "application/json" },
+    });
   }
 }
