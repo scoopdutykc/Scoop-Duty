@@ -1,19 +1,51 @@
+// app/checkout/page.js
 'use client';
+
+import { Suspense } from "react";
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "../../lib/firebase";
 
+export const dynamic = "force-dynamic";      // ⬅️ tell Next not to pre-render
+export const revalidate = 0;                 // ⬅️ no caching for this page
+
 export default function CheckoutPage() {
+  return (
+    <Suspense fallback={null}>
+      <CheckoutInner />
+    </Suspense>
+  );
+}
+
+function CheckoutInner() {
   const searchParams = useSearchParams();
   const [user, setUser] = useState(null);
+  const [authReady, setAuthReady] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
+  // Track auth state
   useEffect(() => {
-    const unsub = onAuthStateChanged(auth, (u) => setUser(u));
+    const unsub = onAuthStateChanged(auth, (u) => {
+      setUser(u);
+      setAuthReady(true);
+    });
     return () => unsub();
   }, []);
+
+  // If not authed, bounce home & open signup; preserve QS to resume
+  useEffect(() => {
+    if (!authReady) return;
+    if (!user) {
+      try {
+        const qs = window.location.search.slice(1);
+        if (qs) localStorage.setItem("pendingCheckoutQS", qs);
+      } catch {}
+      window.dispatchEvent(new Event("open-signup"));
+      window.location.href = "/";
+    }
+  }, [authReady, user]);
 
   async function startCheckout() {
     setLoading(true);
@@ -42,6 +74,8 @@ export default function CheckoutPage() {
     }
     setLoading(false);
   }
+
+  if (!authReady || !user) return null;
 
   return (
     <main
