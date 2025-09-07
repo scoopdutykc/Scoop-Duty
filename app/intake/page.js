@@ -1,30 +1,49 @@
+// app/intake/page.js
 'use client';
-import { useEffect, useState, useMemo } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+
+import { useEffect, useMemo, useState } from 'react';
 import { onAuthStateChanged } from 'firebase/auth';
-import { auth, db } from '../../lib/firebase';
-import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
+import { auth, db } from '../lib/firebase'; // <-- path matches your earlier working setup
+import {
+  addDoc,
+  collection,
+  serverTimestamp,
+} from 'firebase/firestore';
+
+// Tell Next this page is dynamic so it won't try to prerender it
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
+// --- small helper to read query params without useSearchParams() ---
+function useQueryParam(name) {
+  const [value, setValue] = useState(null);
+  useEffect(() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      setValue(params.get(name));
+    } catch {
+      setValue(null);
+    }
+  }, [name]);
+  return value;
+}
 
 export default function IntakePage() {
-  const router = useRouter();
-  const qp = useSearchParams();
-
-  const [authReady, setAuthReady] = useState(false);
   const [user, setUser] = useState(null);
+  const [authReady, setAuthReady] = useState(false);
 
-  const [form, setForm] = useState({
-    // === Replace these with your real fields / default values ===
-    address: '',
-    gateCode: '',
-    notes: '',
-  });
-
+  // form state (keep whatever fields you already had)
+  const [fullName, setFullName] = useState('');
+  const [address, setAddress] = useState('');
+  const [notes, setNotes] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
+  const [done, setDone] = useState(false);
 
-  // Read Stripe session info (optional)
-  const sessionId = useMemo(() => qp.get('session_id') || '', [qp]);
+  // read the session id from the URL without useSearchParams()
+  const sessionId = useQueryParam('session_id');
 
+  // auth
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, (u) => {
       setUser(u);
@@ -33,133 +52,167 @@ export default function IntakePage() {
     return () => unsub();
   }, []);
 
-  function updateField(name, value) {
-    setForm((f) => ({ ...f, [name]: value }));
-  }
+  // (optional) prefill from session metadata you might have stored server-side
+  // If you call an API route to look up session details, do it here with fetch()
+  // using `sessionId`, then set form defaults. Keeping it simple for now.
 
   async function handleSubmit(e) {
     e.preventDefault();
-    setError('');
-
     if (!authReady) return;
     if (!user) {
-      setError('Please log in to submit your intake form.');
+      setError('Please log in first.');
       return;
     }
 
     setSubmitting(true);
+    setError('');
+
     try {
+      // Write intake doc. Collection name can be changed to match your rules.
       const payload = {
-        ...form,
-        // What they bought (comes from checkout metadata or URL if you passed it)
-        service: qp.get('service') || '',
-        frequency: qp.get('frequency') || '',
-        yardSize: qp.get('yardSize') || '',
-        pets: qp.get('pets') || '',
-        litterBoxes: qp.get('litterBoxes') || '',
-        sessionId,
         uid: user.uid,
         email: user.email || '',
+        fullName,
+        address,
+        notes,
+        sessionId: sessionId || '',
         createdAt: serverTimestamp(),
       };
 
-      await addDoc(collection(db, 'intake'), payload);
+      await addDoc(collection(db, 'intakes'), payload);
 
-      setSubmitting(false);
-      router.replace('/thanks'); // or wherever your confirmation page is
+      setDone(true);
     } catch (err) {
-      console.error('Intake save failed:', err);
-      // Typical App Check enforcement error will just look like a 400/transport error.
-      // Show a helpful message:
-      setError(
-        'We couldn’t save your answers. If this keeps happening, refresh and try again. ' +
-        'If you’re on a corporate/VPN network, try a normal connection.'
-      );
+      setError(err?.message || 'Submission failed');
+    } finally {
       setSubmitting(false);
     }
   }
 
-  if (!authReady) return null;
+  // Require login (keeps consistent with your rules)
+  if (authReady && !user) {
+    return (
+      <main style={{ maxWidth: 720, margin: '0 auto', padding: '2rem' }}>
+        <h1>Intake</h1>
+        <p>Please log in to continue.</p>
+      </main>
+    );
+  }
 
   return (
-    <main style={{ maxWidth: 860, margin: '0 auto', padding: '24px' }}>
-      <h1 style={{ fontSize: 28, fontWeight: 800, marginBottom: 16 }}>Service Intake</h1>
+    <main style={{ maxWidth: 720, margin: '0 auto', padding: '2rem' }}>
+      <h1 style={{ marginBottom: 12 }}>Service Intake</h1>
 
-      {/* Optional: show the product summary */}
-      <div style={{ marginBottom: 16, fontSize: 14, color: '#555' }}>
-        <strong>Service:</strong> {qp.get('service') || '—'} &nbsp;•&nbsp;
-        <strong>Frequency:</strong> {qp.get('frequency') || '—'} &nbsp;•&nbsp;
-        <strong>Yard size:</strong> {qp.get('yardSize') || '—'} &nbsp;•&nbsp;
-        <strong>Pets:</strong> {qp.get('pets') || '—'} &nbsp;•&nbsp;
-        <strong>Litter boxes:</strong> {qp.get('litterBoxes') || '—'}
-      </div>
-
-      <form onSubmit={handleSubmit} style={{ display: 'grid', gap: 12 }}>
-        {/* === Replace with your real fields === */}
-        <label style={{ display: 'grid', gap: 6 }}>
-          <span>Service Address</span>
-          <input
-            value={form.address}
-            onChange={(e) => updateField('address', e.target.value)}
-            placeholder="1234 Doggo Ln, Kansas City, MO"
-            required
-            style={inputStyle}
-          />
-        </label>
-
-        <label style={{ display: 'grid', gap: 6 }}>
-          <span>Gate Code (optional)</span>
-          <input
-            value={form.gateCode}
-            onChange={(e) => updateField('gateCode', e.target.value)}
-            placeholder="e.g., 1234#"
-            style={inputStyle}
-          />
-        </label>
-
-        <label style={{ display: 'grid', gap: 6 }}>
-          <span>Notes for your tech (optional)</span>
-          <textarea
-            value={form.notes}
-            onChange={(e) => updateField('notes', e.target.value)}
-            placeholder="Anything we should know about your yard or pets?"
-            rows={4}
-            style={{ ...inputStyle, resize: 'vertical' }}
-          />
-        </label>
-
-        {error && (
-          <div style={{ color: '#b00020', fontWeight: 600, marginTop: 4 }}>{error}</div>
-        )}
-
-        <button
-          type="submit"
-          disabled={submitting}
-          style={buttonStyle}
+      {sessionId && (
+        <div
+          style={{
+            marginBottom: 16,
+            padding: '10px 12px',
+            borderRadius: 10,
+            background: '#f5f7ff',
+            border: '1px solid #e2e7ff',
+            fontSize: 14,
+          }}
         >
-          {submitting ? 'Submitting…' : 'Submit'}
-        </button>
-      </form>
+          Linked Stripe session: <strong>{sessionId}</strong>
+        </div>
+      )}
+
+      {error && (
+        <div
+          style={{
+            marginBottom: 16,
+            padding: '10px 12px',
+            borderRadius: 10,
+            background: '#fff4f4',
+            border: '1px solid #ffd6d6',
+            color: '#b00020',
+          }}
+        >
+          {error}
+        </div>
+      )}
+
+      {done ? (
+        <div
+          style={{
+            padding: '18px 16px',
+            borderRadius: 12,
+            background: '#f1fff4',
+            border: '1px solid #c9f3d2',
+          }}
+        >
+          <h2 style={{ marginTop: 0 }}>Thanks! 🎉</h2>
+          <p>Your intake was submitted successfully. We’ll email you shortly.</p>
+        </div>
+      ) : (
+        <form onSubmit={handleSubmit}>
+          <label style={{ display: 'block', marginBottom: 10 }}>
+            <div style={{ fontWeight: 600, marginBottom: 6 }}>Full name</div>
+            <input
+              type="text"
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
+              required
+              style={{
+                width: '100%',
+                padding: '12px 14px',
+                borderRadius: 10,
+                border: '1px solid #ddd',
+              }}
+            />
+          </label>
+
+          <label style={{ display: 'block', marginBottom: 10 }}>
+            <div style={{ fontWeight: 600, marginBottom: 6 }}>Service address</div>
+            <input
+              type="text"
+              value={address}
+              onChange={(e) => setAddress(e.target.value)}
+              required
+              style={{
+                width: '100%',
+                padding: '12px 14px',
+                borderRadius: 10,
+                border: '1px solid #ddd',
+              }}
+            />
+          </label>
+
+          <label style={{ display: 'block', marginBottom: 16 }}>
+            <div style={{ fontWeight: 600, marginBottom: 6 }}>Notes (gate code, pets, etc.)</div>
+            <textarea
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              rows={4}
+              style={{
+                width: '100%',
+                padding: '12px 14px',
+                borderRadius: 10,
+                border: '1px solid #ddd',
+                resize: 'vertical',
+              }}
+            />
+          </label>
+
+          <button
+            type="submit"
+            disabled={submitting}
+            style={{
+              padding: '12px 18px',
+              borderRadius: 12,
+              border: '1px solid #333',
+              background: '#333',
+              color: '#fff',
+              fontWeight: 700,
+              cursor: 'pointer',
+              minWidth: 180,
+            }}
+          >
+            {submitting ? 'Submitting…' : 'Submit'}
+          </button>
+        </form>
+      )}
     </main>
   );
 }
-
-const inputStyle = {
-  padding: '12px 14px',
-  border: '1px solid #ccc',
-  borderRadius: 10,
-  fontSize: 16,
-  outline: 'none',
-};
-
-const buttonStyle = {
-  marginTop: 8,
-  padding: '12px 16px',
-  borderRadius: 10,
-  fontSize: 16,
-  fontWeight: 700,
-  background: '#111',
-  color: '#fff',
-  border: '1px solid #111',
-  cursor: 'pointer',
-};
