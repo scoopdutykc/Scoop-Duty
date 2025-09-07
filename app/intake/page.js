@@ -2,23 +2,20 @@
 import { Suspense } from "react";
 import IntakeClient from "./IntakeClient";
 
-// Prevent any static rendering just in case:
+// Prevent static prerender & silence "useSearchParams" build error
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-export default function IntakePage() {
+export default function Page() {
   return (
-    <main style={{ maxWidth: 720, margin: "0 auto", padding: "2rem" }}>
-      <h1 style={{ marginBottom: 12 }}>Service Intake</h1>
-      <Suspense
-        fallback={
-          <div style={{ padding: 12, border: "1px solid #eee", borderRadius: 10 }}>
-            Loading…
-          </div>
-        }
-      >
-        <IntakeClient />
-      </Suspense>
-    </main>
+    <Suspense
+      fallback={
+        <main style={{ maxWidth: 800, margin: "0 auto", padding: "1.25rem" }}>
+          Loading…
+        </main>
+      }
+    >
+      <IntakeClient />
+    </Suspense>
   );
 }
