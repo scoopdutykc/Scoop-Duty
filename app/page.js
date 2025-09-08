@@ -184,7 +184,7 @@ export default function HomePage() {
             name: "Scoop Duty KC",
             url: "https://scoop-duty.com",
             description:
-              "Pet waste removal in the Kansas City Metro (MO side). Weekly or one-time scooping, doggy playtime, and kitty litter trade.",
+              "Pet waste removal in the Kansas City Metro",
             image: "https://scoop-duty.com/images/og-hero.jpg",
             email: "scoopdutykc@gmail.com",
             address: {
@@ -214,10 +214,10 @@ export default function HomePage() {
           <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.45) 100%)" }} />
           <div style={{ position: "absolute", left: 20, bottom: 20, color: "#fff", maxWidth: 720 }}>
             <h1 style={{ margin: 0, fontSize: "clamp(15px, 1.2vw, 30px)", lineHeight: 3, fontWeight: "bold" }}>
-              Use Code "FIRST" for 50% Off Your First Service!
+              
             </h1>
             <p style={{ margin: "1rem 0 3rem", opacity: 0.95, fontSize: "clamp(16px, 1.6vw, 20px)" }}>
-              Servicing the KC Metro Area.
+              
             </p>
             <button
               onClick={() => window.dispatchEvent(new Event("open-signup"))}
